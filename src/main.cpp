@@ -9,6 +9,17 @@
 
 #include "RotaryManager.h"
 #include "AppManager.h"
+#include "DisplayManager.h"
+
+#define DEBUG 0
+
+#if DEBUG
+#define DEBUG_PRINT(x) Serial.print(x)
+#define DEBUG_PRINTLN(x) Serial.println(x)
+#else
+#define DEBUG_PRINT(x)
+#define DEBUG_PRINTLN(x)
+#endif
 
 LGFX display1;
 LGFX2 display2;
@@ -18,6 +29,7 @@ QuotesApp quotesApp;
 SettingsApp settingsApp;
 
 AppManager appManager;
+DisplayManager displayManager;
 
 RotaryManager rotary(32, 33, 25);
 
@@ -26,49 +38,23 @@ int selectedDisplay = 0; // 0 = Left, 1 = Right
 int display1App = 0;
 int display2App = 1;
 
-bool selectingDisplay = false;
-int displayMenuIndex = 0;
-
 void redrawDisplays()
 {
-    appManager.getApp(display1App)->draw(&display1);
-    appManager.getApp(display2App)->draw(&display2);
-}
-
-void showDisplaySelector()
-{
-    display1.fillScreen(TFT_BLACK);
-
-    display1.setTextColor(TFT_CYAN);
-    display1.setTextSize(2);
-
-    display1.drawCentreString(
-        "SELECT DISPLAY",
-        120,
-        40,
-        2
+    displayManager.redrawDisplays(
+        &display1,
+        &display2,
+        appManager.getApp(display1App),
+        appManager.getApp(display2App),
+        selectedDisplay
     );
-
-    if (displayMenuIndex == 0)
-    {
-        display1.setTextColor(TFT_GREEN);
-        display1.drawCentreString("> LEFT <", 120, 120, 2);
-
-        display1.setTextColor(TFT_WHITE);
-        display1.drawCentreString("RIGHT", 120, 180, 2);
-    }
-    else
-    {
-        display1.setTextColor(TFT_WHITE);
-        display1.drawCentreString("LEFT", 120, 120, 2);
-
-        display1.setTextColor(TFT_GREEN);
-        display1.drawCentreString("> RIGHT <", 120, 180, 2);
-    }
 }
 
 void setup()
 {
+#if DEBUG
+    Serial.begin(115200);
+#endif
+
     display1.init();
     display1.setRotation(2);
 
@@ -88,39 +74,21 @@ void loop()
 {
     int rotation = rotary.getRotation();
 
-    if (selectingDisplay)
-    {
-        if (rotation != 0)
-        {
-            displayMenuIndex = !displayMenuIndex;
-            showDisplaySelector();
-        }
-
-        if (rotary.isPressed())
-        {
-            selectedDisplay = displayMenuIndex;
-
-            selectingDisplay = false;
-
-            redrawDisplays();
-
-            delay(300);
-        }
-
-        return;
-    }
-
     if (rotary.isLongPressed())
     {
-        selectingDisplay = true;
-        showDisplaySelector();
+        selectedDisplay = selectedDisplay == 0 ? 1 : 0;
+
+        DEBUG_PRINT("Active display: ");
+        DEBUG_PRINTLN(selectedDisplay == 0 ? "LEFT" : "RIGHT");
+
+        redrawDisplays();
         return;
     }
 
     if (rotation != 0)
     {
-        Serial.print("Rotation: ");
-        Serial.println(rotation);
+        DEBUG_PRINT("Rotation: ");
+        DEBUG_PRINTLN(rotation);
 
         if (selectedDisplay == 0)
         {
@@ -131,6 +99,9 @@ void loop()
 
             if (display1App >= appManager.getCount())
                 display1App = 0;
+
+            DEBUG_PRINT("Active display: LEFT, selected app index: ");
+            DEBUG_PRINTLN(display1App);
         }
         else
         {
@@ -141,12 +112,11 @@ void loop()
 
             if (display2App >= appManager.getCount())
                 display2App = 0;
-        }
-        Serial.print("Display1 App: ");
-        Serial.println(display1App);
 
-        Serial.print("Display2 App: ");
-        Serial.println(display2App);
+            DEBUG_PRINT("Active display: RIGHT, selected app index: ");
+            DEBUG_PRINTLN(display2App);
+        }
+
         redrawDisplays();
     }
 }

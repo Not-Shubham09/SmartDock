@@ -15,84 +15,115 @@ void RotaryManager::begin()
     pinMode(swPin, INPUT_PULLUP);
 
     lastCLK = digitalRead(clkPin);
+    lastEncoded = readEncoderState();
+    lastButtonReading = digitalRead(swPin);
+    buttonState = lastButtonReading;
+}
+
+int RotaryManager::readEncoderState()
+{
+    return (digitalRead(clkPin) << 1) | digitalRead(dtPin);
 }
 
 int RotaryManager::getRotation()
 {
-    static unsigned long lastRotation = 0;
+    const unsigned long rotationRateLimitMs = 35;
+    int currentEncoded = readEncoderState();
 
-    int currentCLK = digitalRead(clkPin);
+    if (currentEncoded == lastEncoded)
+        return 0;
 
-    if (currentCLK != lastCLK &&
-        millis() - lastRotation > 50)
+    int transition = (lastEncoded << 2) | currentEncoded;
+    int step = 0;
+
+    switch (transition)
     {
-        lastRotation = millis();
+        case 0b0001:
+        case 0b0111:
+        case 0b1110:
+        case 0b1000:
+            step = -1;
+            break;
 
-        int direction;
+        case 0b0010:
+        case 0b1011:
+        case 0b1101:
+        case 0b0100:
+            step = 1;
+            break;
 
-        if (digitalRead(dtPin) != currentCLK)
-            direction = 1;
-        else
-            direction = -1;
-
-        lastCLK = currentCLK;
-
-        return direction;
+        default:
+            encoderDelta = 0;
+            lastEncoded = currentEncoded;
+            return 0;
     }
 
-    lastCLK = currentCLK;
+    lastEncoded = currentEncoded;
+    encoderDelta += step;
+
+    if (encoderDelta >= 4 || encoderDelta <= -4)
+    {
+        unsigned long now = millis();
+        int direction = encoderDelta > 0 ? 1 : -1;
+
+        encoderDelta = 0;
+
+        if (lastRotationEvent != 0 &&
+            now - lastRotationEvent < rotationRateLimitMs)
+        {
+            lastRotationEvent = now;
+            return 0;
+        }
+
+        lastRotationEvent = now;
+        return direction;
+    }
 
     return 0;
 }
 
 bool RotaryManager::isPressed()
 {
-    static bool lastState = HIGH;
-    static unsigned long lastDebounce = 0;
+    bool currentReading = digitalRead(swPin);
 
-    bool currentState = digitalRead(swPin);
-
-    if (currentState != lastState)
+    if (currentReading != lastButtonReading)
     {
-        lastDebounce = millis();
+        lastButtonDebounce = millis();
+        lastButtonReading = currentReading;
     }
 
-    if (millis() - lastDebounce > 200)
+    if (millis() - lastButtonDebounce > 50 &&
+        currentReading != buttonState)
     {
-        if (lastState == HIGH &&
-            currentState == LOW)
+        buttonState = currentReading;
+
+        if (buttonState == LOW)
         {
-            lastState = currentState;
             return true;
         }
     }
-
-    lastState = currentState;
 
     return false;
 }
 
 bool RotaryManager::isLongPressed()
 {
-    static bool triggered = false;
-    static unsigned long pressStart = 0;
-
     if (digitalRead(swPin) == LOW)
     {
         if (pressStart == 0)
             pressStart = millis();
 
-        if (!triggered &&
+        if (!longPressTriggered &&
             millis() - pressStart > 1000)
         {
-            triggered = true;
+            longPressTriggered = true;
             return true;
         }
     }
     else
     {
         pressStart = 0;
-        triggered = false;
+        longPressTriggered = false;
     }
 
     return false;
