@@ -10,6 +10,8 @@
 #include "RotaryManager.h"
 #include "AppManager.h"
 #include "DisplayManager.h"
+#include "WiFiManager.h"
+#include "secrets.h"
 
 #define DEBUG 0
 
@@ -30,6 +32,7 @@ SettingsApp settingsApp;
 
 AppManager appManager;
 DisplayManager displayManager;
+WiFiManager wifiManager;
 
 RotaryManager rotary(32, 33, 25);
 
@@ -62,6 +65,7 @@ void setup()
     display2.setRotation(2);
 
     rotary.begin();
+    wifiManager.begin(WIFI_SSID, WIFI_PASSWORD);
 
     appManager.addApp(&clockApp);
     appManager.addApp(&quotesApp);
@@ -72,6 +76,8 @@ void setup()
 
 void loop()
 {
+    wifiManager.update();
+
     int rotation = rotary.getRotation();
 
     if (rotary.isLongPressed())

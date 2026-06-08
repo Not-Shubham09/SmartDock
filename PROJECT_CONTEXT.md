@@ -1,5 +1,8 @@
 # SmartDock
 
+Path:
+/Users/shubhamhooda/Documents/PlatformIO/Projects/SmartDock
+
 ## Hardware
 
 ESP32 Dev Module
@@ -26,6 +29,10 @@ CLK -> GPIO32
 DT -> GPIO33
 SW -> GPIO25
 
+Platform
+ESP32 Dev Module
+PlatformIO
+LovyanGFX
 ---
 
 ## Libraries
@@ -51,8 +58,17 @@ Features:
 - Music
 - Anime Wallpapers
 
-Long press should switch active display.
+Rules
+- Never modify LGFX_Config.h
+- Never modify LGFX_Config2.h
+- Never change GPIO assignments
+- Modify existing files in-place
+- Do not create duplicate project structures
+- Apps inherit from App
+- Keep app logic out of main.cpp
 
-Selected display should be highlighted.
-
-Do not modify hardware pin assignments.
+Current Status
+- Dual displays working
+- Navigation working
+- Active display border working
+- WiFiManager exists
