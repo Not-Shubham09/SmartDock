@@ -1,4 +1,5 @@
 #include "QuotesApp.h"
+#include "ThemeManager.h"
 
 const char* QuotesApp::getName()
 {
@@ -7,16 +8,17 @@ const char* QuotesApp::getName()
 
 void QuotesApp::draw(lgfx::LGFX_Device* display)
 {
-    display->fillScreen(TFT_BLACK);
+    const Theme& theme = ThemeManager::current();
+    display->fillScreen(theme.background);
 
-    display->drawRoundRect(10, 10, 220, 300, TFT_GREEN);
+    display->drawRoundRect(10, 24, 220, 286, theme.success);
 
-    display->setTextColor(TFT_GREEN);
+    display->setTextColor(theme.success);
     display->setTextSize(3);
 
-    display->drawCentreString("QUOTE", 120, 30, 2);
+    display->drawCentreString("QUOTE", 120, 35, 2);
 
-    display->setTextColor(TFT_WHITE);
+    display->setTextColor(theme.foreground);
     display->setTextSize(2);
 
     display->drawCentreString(

@@ -13,6 +13,7 @@
 #include "DisplayManager.h"
 #include "WiFiManager.h"
 #include "secrets.h"
+#include "StatusBar.h"
 
 #define DEBUG 0
 
@@ -81,8 +82,14 @@ void loop()
 {
     wifiManager.update();
 
-    appManager.getApp(display1App)->update(&display1);
-    appManager.getApp(display2App)->update(&display2);
+    App* app1 = appManager.getApp(display1App);
+    App* app2 = appManager.getApp(display2App);
+
+    app1->update(&display1);
+    app2->update(&display2);
+
+    StatusBar::draw(&display1, app1->getName());
+    StatusBar::draw(&display2, app2->getName());
 
     int rotation = rotary.getRotation();
 

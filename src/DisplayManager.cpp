@@ -1,4 +1,6 @@
 #include "DisplayManager.h"
+#include "StatusBar.h"
+#include "ThemeManager.h"
 
 void DisplayManager::drawActiveBorder(lgfx::LGFX_Device* display)
 {
@@ -9,7 +11,7 @@ void DisplayManager::drawActiveBorder(lgfx::LGFX_Device* display)
             inset,
             display->width() - (inset * 2),
             display->height() - (inset * 2),
-            TFT_CYAN
+            ThemeManager::current().accent
         );
     }
 }
@@ -21,6 +23,8 @@ void DisplayManager::drawDisplay(
 )
 {
     app->draw(display);
+
+    StatusBar::draw(display, app->getName(), true);
 
     if (active)
         drawActiveBorder(display);

@@ -68,6 +68,7 @@ Rules
 - Keep app logic out of main.cpp
 - Use ThemeManager colors instead of hardcoding colors in apps
 - Use FontManager fonts instead of directly selecting fonts in apps
+- Apps must render below the status bar (Y >= 18)
 
 Current Status
 - Dual displays working
@@ -76,3 +77,4 @@ Current Status
 - WiFiManager exists
 - ThemeManager exists
 - FontManager exists
+- StatusBar exists

@@ -1,4 +1,5 @@
 #include "SettingsApp.h"
+#include "ThemeManager.h"
 
 const char* SettingsApp::getName()
 {
@@ -7,23 +8,24 @@ const char* SettingsApp::getName()
 
 void SettingsApp::draw(lgfx::LGFX_Device* display)
 {
-    display->fillScreen(TFT_BLACK);
+    const Theme& theme = ThemeManager::current();
+    display->fillScreen(theme.background);
 
     display->drawRoundRect(
         10,
-        10,
+        24,
         220,
-        300,
-        TFT_ORANGE
+        286,
+        theme.warning
     );
 
-    display->setTextColor(TFT_ORANGE);
+    display->setTextColor(theme.warning);
     display->setTextSize(3);
 
     display->drawCentreString(
         "SETTINGS",
         120,
-        40,
+        45,
         2
     );
 }
