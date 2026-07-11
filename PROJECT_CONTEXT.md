@@ -69,6 +69,7 @@ Rules
 - Use ThemeManager colors instead of hardcoding colors in apps
 - Use FontManager fonts instead of directly selecting fonts in apps
 - Apps must render below the status bar (Y >= 18)
+- Use IconManager for visual icons/placeholders instead of text or assets
 
 Current Status
 - Dual displays working
@@ -78,3 +79,4 @@ Current Status
 - ThemeManager exists
 - FontManager exists
 - StatusBar exists
+- IconManager exists
