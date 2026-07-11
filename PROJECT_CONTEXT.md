@@ -66,9 +66,11 @@ Rules
 - Do not create duplicate project structures
 - Apps inherit from App
 - Keep app logic out of main.cpp
+- Use ThemeManager colors instead of hardcoding colors in apps
 
 Current Status
 - Dual displays working
 - Navigation working
 - Active display border working
 - WiFiManager exists
+- ThemeManager exists

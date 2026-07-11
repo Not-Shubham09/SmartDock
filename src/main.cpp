@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <time.h>
 
 #include "LGFX_Config.h"
 #include "LGFX_Config2.h"
@@ -67,6 +68,8 @@ void setup()
     rotary.begin();
     wifiManager.begin(WIFI_SSID, WIFI_PASSWORD);
 
+    configTzTime("IST-5:30", "pool.ntp.org", "time.nist.gov");
+
     appManager.addApp(&clockApp);
     appManager.addApp(&quotesApp);
     appManager.addApp(&settingsApp);
@@ -77,6 +80,9 @@ void setup()
 void loop()
 {
     wifiManager.update();
+
+    appManager.getApp(display1App)->update(&display1);
+    appManager.getApp(display2App)->update(&display2);
 
     int rotation = rotary.getRotation();
 
