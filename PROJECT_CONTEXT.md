@@ -73,6 +73,7 @@ Rules
 - Screen/state transitions should use AnimationManager to avoid blocking delays
 - Follow the redesigned non-blocking NavigationMode flow (Launcher vs. Interactive App Mode)
 - Broadcast events/alerts to the user using the non-blocking NotificationManager
+- Store and retrieve user configuration settings using SettingsManager
 
 Current Status
 - Dual displays working
@@ -85,3 +86,4 @@ Current Status
 - IconManager exists
 - AnimationManager exists
 - NotificationManager exists
+- SettingsManager exists

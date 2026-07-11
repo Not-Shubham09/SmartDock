@@ -17,6 +17,7 @@
 #include "AnimationManager.h"
 #include "LauncherApp.h"
 #include "NotificationManager.h"
+#include "SettingsManager.h"
 
 #define DEBUG 0
 
@@ -92,7 +93,22 @@ void setup()
     display2.setRotation(2);
 
     rotary.begin();
-    wifiManager.begin(WIFI_SSID, WIFI_PASSWORD);
+
+    // Load persistent settings from NVS Preferences
+    SettingsManager::load();
+    SettingsManager::applySettings();
+    const Settings& settings = SettingsManager::get();
+
+    // Apply restored selections
+    ds1.mode = NavigationMode::APP;
+    ds1.runningAppIdx = settings.leftAppIdx;
+    ds1.selectedAppIdx = settings.leftAppIdx;
+
+    ds2.mode = NavigationMode::APP;
+    ds2.runningAppIdx = settings.rightAppIdx;
+    ds2.selectedAppIdx = settings.rightAppIdx;
+
+    wifiManager.begin(settings.wifiSSID, settings.wifiPassword);
 
     configTzTime("IST-5:30", "pool.ntp.org", "time.nist.gov");
 
@@ -203,6 +219,11 @@ void loop()
                 ds1.mode = NavigationMode::APP;
                 ds1.runningAppIdx = ds1.selectedAppIdx;
 
+                // Save selected left app index persistently
+                Settings settings = SettingsManager::get();
+                settings.leftAppIdx = ds1.runningAppIdx;
+                SettingsManager::set(settings);
+
                 animationManager.startAnimation(
                     &display1,
                     &launcherApp1,
@@ -221,6 +242,11 @@ void loop()
             {
                 ds2.mode = NavigationMode::APP;
                 ds2.runningAppIdx = ds2.selectedAppIdx;
+
+                // Save selected right app index persistently
+                Settings settings = SettingsManager::get();
+                settings.rightAppIdx = ds2.runningAppIdx;
+                SettingsManager::set(settings);
 
                 animationManager.startAnimation(
                     &display2,

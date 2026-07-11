@@ -10,4 +10,5 @@ private:
 public:
     static const Theme& current();
     static void setTheme(const Theme& theme);
+    static void setTheme(int themeIdx);
 };
