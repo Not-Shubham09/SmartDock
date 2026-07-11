@@ -14,6 +14,7 @@
 #include "WiFiManager.h"
 #include "secrets.h"
 #include "StatusBar.h"
+#include "AnimationManager.h"
 
 #define DEBUG 0
 
@@ -37,6 +38,7 @@ DisplayManager displayManager;
 WiFiManager wifiManager;
 
 RotaryManager rotary(32, 33, 25);
+AnimationManager animationManager;
 
 int selectedDisplay = 0; // 0 = Left, 1 = Right
 
@@ -82,6 +84,12 @@ void loop()
 {
     wifiManager.update();
 
+    if (animationManager.isAnimating())
+    {
+        animationManager.update();
+        return;
+    }
+
     App* app1 = appManager.getApp(display1App);
     App* app2 = appManager.getApp(display2App);
 
@@ -111,6 +119,7 @@ void loop()
 
         if (selectedDisplay == 0)
         {
+            int oldAppIdx = display1App;
             display1App += rotation;
 
             if (display1App < 0)
@@ -121,9 +130,17 @@ void loop()
 
             DEBUG_PRINT("Active display: LEFT, selected app index: ");
             DEBUG_PRINTLN(display1App);
+
+            animationManager.startAnimation(
+                &display1,
+                appManager.getApp(oldAppIdx),
+                appManager.getApp(display1App),
+                rotation > 0 ? AnimationType::SLIDE_LEFT : AnimationType::SLIDE_RIGHT
+            );
         }
         else
         {
+            int oldAppIdx = display2App;
             display2App += rotation;
 
             if (display2App < 0)
@@ -134,8 +151,13 @@ void loop()
 
             DEBUG_PRINT("Active display: RIGHT, selected app index: ");
             DEBUG_PRINTLN(display2App);
-        }
 
-        redrawDisplays();
+            animationManager.startAnimation(
+                &display2,
+                appManager.getApp(oldAppIdx),
+                appManager.getApp(display2App),
+                rotation > 0 ? AnimationType::SLIDE_LEFT : AnimationType::SLIDE_RIGHT
+            );
+        }
     }
 }
