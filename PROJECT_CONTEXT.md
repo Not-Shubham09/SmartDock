@@ -67,6 +67,7 @@ Rules
 - Apps inherit from App
 - Keep app logic out of main.cpp
 - Use ThemeManager colors instead of hardcoding colors in apps
+- Use FontManager fonts instead of directly selecting fonts in apps
 
 Current Status
 - Dual displays working
@@ -74,3 +75,4 @@ Current Status
 - Active display border working
 - WiFiManager exists
 - ThemeManager exists
+- FontManager exists
