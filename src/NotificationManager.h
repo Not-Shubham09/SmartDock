@@ -4,7 +4,7 @@
 
 struct Notification
 {
-    const char* message;
+    char message[32];
     uint16_t color;
     int iconIdx;
     unsigned long durationMs;
@@ -37,7 +37,7 @@ private:
     struct ActiveAnim
     {
         AnimState state = AnimState::IDLE;
-        Notification currentNote = { nullptr, 0, 0, 0 };
+        Notification currentNote = { "", 0, 0, 0 };
         unsigned long stateStartTime = 0;
         int currentY = -36;
     };

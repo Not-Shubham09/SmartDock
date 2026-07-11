@@ -5,7 +5,7 @@
 class AppManager
 {
 private:
-    App* apps[10];
+    App* apps[20] = {nullptr};
     int appCount = 0;
 
 public:

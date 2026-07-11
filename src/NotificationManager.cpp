@@ -21,7 +21,11 @@ bool NotificationManager::QueueState::push(const Notification& note)
 
 Notification NotificationManager::QueueState::pop()
 {
-    if (count == 0) return { nullptr, 0, 0, 0 };
+    if (count == 0)
+    {
+        Notification emptyNote = {};
+        return emptyNote;
+    }
     Notification note = queue[head];
     head = (head + 1) % MAX_QUEUE;
     count--;
@@ -42,7 +46,13 @@ unsigned long NotificationManager::lastFrameTime = 0;
 
 void NotificationManager::postNotification(lgfx::LGFX_Device* display, const char* message, uint16_t color, int iconIdx, unsigned long durationMs)
 {
-    Notification note = { message, color, iconIdx, durationMs };
+    Notification note;
+    strncpy(note.message, message != nullptr ? message : "", sizeof(note.message) - 1);
+    note.message[sizeof(note.message) - 1] = '\0';
+    note.color = color;
+    note.iconIdx = iconIdx;
+    note.durationMs = durationMs;
+
     if (display == (lgfx::LGFX_Device*)&display1)
     {
         queue1.push(note);
@@ -135,7 +145,10 @@ void NotificationManager::updateDisplayNotification(lgfx::LGFX_Device* display, 
                 {
                     anim.currentY = -36;
                     anim.state = AnimState::IDLE;
-                    anim.currentNote = { nullptr, 0, 0, 0 };
+                    memset(anim.currentNote.message, 0, sizeof(anim.currentNote.message));
+                    anim.currentNote.color = 0;
+                    anim.currentNote.iconIdx = 0;
+                    anim.currentNote.durationMs = 0;
                     
                     // Clear the notification area by redrawing the screen
                     redrawDisplays();
@@ -152,7 +165,7 @@ void NotificationManager::updateDisplayNotification(lgfx::LGFX_Device* display, 
 
 void NotificationManager::drawNotification(lgfx::LGFX_Device* display, const ActiveAnim& anim)
 {
-    if (anim.state == AnimState::IDLE || anim.currentNote.message == nullptr)
+    if (anim.state == AnimState::IDLE || anim.currentNote.message[0] == '\0')
         return;
 
     const Theme& theme = ThemeManager::current();

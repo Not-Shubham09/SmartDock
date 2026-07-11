@@ -23,7 +23,7 @@ void WiFiManager::begin(const char* wifiSsid, const char* wifiPassword)
 
 void WiFiManager::update()
 {
-    const unsigned long reconnectIntervalMs = 10000;
+    const unsigned long reconnectIntervalMs = 30000;
 
     if (ssid == nullptr || ssid[0] == '\0')
         return;
