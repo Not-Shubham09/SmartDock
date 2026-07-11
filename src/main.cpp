@@ -16,6 +16,7 @@
 #include "StatusBar.h"
 #include "AnimationManager.h"
 #include "LauncherApp.h"
+#include "NotificationManager.h"
 
 #define DEBUG 0
 
@@ -104,6 +105,10 @@ void setup()
     launcherApp2.setSelectedIdx(ds2.selectedAppIdx);
 
     redrawDisplays();
+
+    // Post initial mock notifications to demonstrate sliding popups at boot
+    NotificationManager::postNotification(&display1, "Weather Updated", ThemeManager::current().success, 4, 3000);
+    NotificationManager::postNotification(&display2, "Battery Low", ThemeManager::current().warning, 1, 3000);
 }
 
 void loop()
@@ -126,6 +131,19 @@ void loop()
 
     StatusBar::draw(&display1, app1->getName());
     StatusBar::draw(&display2, app2->getName());
+
+    // Update notification animations
+    NotificationManager::update();
+
+    // Auto-post notification on WiFi connection transition
+    static bool lastWifiConnected = false;
+    bool currentWifiConnected = wifiManager.isConnected();
+    if (currentWifiConnected && !lastWifiConnected)
+    {
+        NotificationManager::postNotification(&display1, "WiFi Connected", ThemeManager::current().success, 0);
+        NotificationManager::postNotification(&display2, "WiFi Connected", ThemeManager::current().success, 0);
+    }
+    lastWifiConnected = currentWifiConnected;
 
     int rotation = rotary.getRotation();
 

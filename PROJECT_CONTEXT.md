@@ -72,6 +72,7 @@ Rules
 - Use IconManager for visual icons/placeholders instead of text or assets
 - Screen/state transitions should use AnimationManager to avoid blocking delays
 - Follow the redesigned non-blocking NavigationMode flow (Launcher vs. Interactive App Mode)
+- Broadcast events/alerts to the user using the non-blocking NotificationManager
 
 Current Status
 - Dual displays working
@@ -83,3 +84,4 @@ Current Status
 - StatusBar exists
 - IconManager exists
 - AnimationManager exists
+- NotificationManager exists
