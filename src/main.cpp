@@ -15,6 +15,7 @@
 #include "secrets.h"
 #include "StatusBar.h"
 #include "AnimationManager.h"
+#include "LauncherApp.h"
 
 #define DEBUG 0
 
@@ -40,18 +41,39 @@ WiFiManager wifiManager;
 RotaryManager rotary(32, 33, 25);
 AnimationManager animationManager;
 
-int selectedDisplay = 0; // 0 = Left, 1 = Right
+enum class NavigationMode
+{
+    LAUNCHER,
+    APP
+};
 
-int display1App = 0;
-int display2App = 1;
+struct DisplayState
+{
+    NavigationMode mode;
+    int selectedAppIdx;
+    int runningAppIdx;
+};
+
+DisplayState ds1 = { NavigationMode::APP, 0, 0 };
+DisplayState ds2 = { NavigationMode::APP, 1, 1 };
+
+LauncherApp launcherApp1;
+LauncherApp launcherApp1_next;
+LauncherApp launcherApp2;
+LauncherApp launcherApp2_next;
+
+int selectedDisplay = 0; // 0 = Left, 1 = Right
 
 void redrawDisplays()
 {
+    App* leftApp = (ds1.mode == NavigationMode::LAUNCHER) ? (App*)&launcherApp1 : appManager.getApp(ds1.runningAppIdx);
+    App* rightApp = (ds2.mode == NavigationMode::LAUNCHER) ? (App*)&launcherApp2 : appManager.getApp(ds2.runningAppIdx);
+
     displayManager.redrawDisplays(
         &display1,
         &display2,
-        appManager.getApp(display1App),
-        appManager.getApp(display2App),
+        leftApp,
+        rightApp,
         selectedDisplay
     );
 }
@@ -77,6 +99,10 @@ void setup()
     appManager.addApp(&quotesApp);
     appManager.addApp(&settingsApp);
 
+    // Sync initial indices
+    launcherApp1.setSelectedIdx(ds1.selectedAppIdx);
+    launcherApp2.setSelectedIdx(ds2.selectedAppIdx);
+
     redrawDisplays();
 }
 
@@ -90,11 +116,13 @@ void loop()
         return;
     }
 
-    App* app1 = appManager.getApp(display1App);
-    App* app2 = appManager.getApp(display2App);
+    App* app1 = (ds1.mode == NavigationMode::LAUNCHER) ? (App*)&launcherApp1 : appManager.getApp(ds1.runningAppIdx);
+    App* app2 = (ds2.mode == NavigationMode::LAUNCHER) ? (App*)&launcherApp2 : appManager.getApp(ds2.runningAppIdx);
 
-    app1->update(&display1);
-    app2->update(&display2);
+    if (ds1.mode == NavigationMode::APP)
+        app1->update(&display1);
+    if (ds2.mode == NavigationMode::APP)
+        app2->update(&display2);
 
     StatusBar::draw(&display1, app1->getName());
     StatusBar::draw(&display2, app2->getName());
@@ -103,61 +131,144 @@ void loop()
 
     if (rotary.isLongPressed())
     {
-        selectedDisplay = selectedDisplay == 0 ? 1 : 0;
+        if (selectedDisplay == 0)
+        {
+            if (ds1.mode == NavigationMode::APP)
+            {
+                ds1.mode = NavigationMode::LAUNCHER;
+                ds1.selectedAppIdx = ds1.runningAppIdx;
+                launcherApp1.setSelectedIdx(ds1.selectedAppIdx);
 
-        DEBUG_PRINT("Active display: ");
-        DEBUG_PRINTLN(selectedDisplay == 0 ? "LEFT" : "RIGHT");
+                animationManager.startAnimation(
+                    &display1,
+                    appManager.getApp(ds1.runningAppIdx),
+                    &launcherApp1,
+                    AnimationType::FADE
+                );
+            }
+            else
+            {
+                selectedDisplay = 1;
+                redrawDisplays();
+            }
+        }
+        else
+        {
+            if (ds2.mode == NavigationMode::APP)
+            {
+                ds2.mode = NavigationMode::LAUNCHER;
+                ds2.selectedAppIdx = ds2.runningAppIdx;
+                launcherApp2.setSelectedIdx(ds2.selectedAppIdx);
 
-        redrawDisplays();
+                animationManager.startAnimation(
+                    &display2,
+                    appManager.getApp(ds2.runningAppIdx),
+                    &launcherApp2,
+                    AnimationType::FADE
+                );
+            }
+            else
+            {
+                selectedDisplay = 0;
+                redrawDisplays();
+            }
+        }
+        return;
+    }
+
+    if (rotary.isPressed())
+    {
+        if (selectedDisplay == 0)
+        {
+            if (ds1.mode == NavigationMode::LAUNCHER)
+            {
+                ds1.mode = NavigationMode::APP;
+                ds1.runningAppIdx = ds1.selectedAppIdx;
+
+                animationManager.startAnimation(
+                    &display1,
+                    &launcherApp1,
+                    appManager.getApp(ds1.runningAppIdx),
+                    AnimationType::FADE
+                );
+            }
+            else
+            {
+                app1->onClick();
+            }
+        }
+        else
+        {
+            if (ds2.mode == NavigationMode::LAUNCHER)
+            {
+                ds2.mode = NavigationMode::APP;
+                ds2.runningAppIdx = ds2.selectedAppIdx;
+
+                animationManager.startAnimation(
+                    &display2,
+                    &launcherApp2,
+                    appManager.getApp(ds2.runningAppIdx),
+                    AnimationType::FADE
+                );
+            }
+            else
+            {
+                app2->onClick();
+            }
+        }
         return;
     }
 
     if (rotation != 0)
     {
-        DEBUG_PRINT("Rotation: ");
-        DEBUG_PRINTLN(rotation);
-
+        int count = appManager.getCount();
         if (selectedDisplay == 0)
         {
-            int oldAppIdx = display1App;
-            display1App += rotation;
+            if (ds1.mode == NavigationMode::LAUNCHER)
+            {
+                int oldIdx = ds1.selectedAppIdx;
+                ds1.selectedAppIdx = (ds1.selectedAppIdx + rotation + count) % count;
 
-            if (display1App < 0)
-                display1App = appManager.getCount() - 1;
+                launcherApp1.setSelectedIdx(oldIdx);
+                launcherApp1_next.setSelectedIdx(ds1.selectedAppIdx);
 
-            if (display1App >= appManager.getCount())
-                display1App = 0;
+                animationManager.startAnimation(
+                    &display1,
+                    &launcherApp1,
+                    &launcherApp1_next,
+                    rotation > 0 ? AnimationType::SLIDE_LEFT : AnimationType::SLIDE_RIGHT
+                );
 
-            DEBUG_PRINT("Active display: LEFT, selected app index: ");
-            DEBUG_PRINTLN(display1App);
-
-            animationManager.startAnimation(
-                &display1,
-                appManager.getApp(oldAppIdx),
-                appManager.getApp(display1App),
-                rotation > 0 ? AnimationType::SLIDE_LEFT : AnimationType::SLIDE_RIGHT
-            );
+                launcherApp1.setSelectedIdx(ds1.selectedAppIdx);
+            }
+            else
+            {
+                app1->onEncoder(rotation);
+            }
         }
         else
         {
-            int oldAppIdx = display2App;
-            display2App += rotation;
+            if (ds2.mode == NavigationMode::LAUNCHER)
+            {
+                int oldIdx = ds2.selectedAppIdx;
+                ds2.selectedAppIdx = (ds2.selectedAppIdx + rotation + count) % count;
 
-            if (display2App < 0)
-                display2App = appManager.getCount() - 1;
+                launcherApp2.setSelectedIdx(oldIdx);
+                launcherApp2_next.setSelectedIdx(ds2.selectedAppIdx);
 
-            if (display2App >= appManager.getCount())
-                display2App = 0;
+                animationManager.startAnimation(
+                    &display2,
+                    &launcherApp2,
+                    &launcherApp2_next,
+                    rotation > 0 ? AnimationType::SLIDE_LEFT : AnimationType::SLIDE_RIGHT
+                );
 
-            DEBUG_PRINT("Active display: RIGHT, selected app index: ");
-            DEBUG_PRINTLN(display2App);
-
-            animationManager.startAnimation(
-                &display2,
-                appManager.getApp(oldAppIdx),
-                appManager.getApp(display2App),
-                rotation > 0 ? AnimationType::SLIDE_LEFT : AnimationType::SLIDE_RIGHT
-            );
+                launcherApp2.setSelectedIdx(ds2.selectedAppIdx);
+            }
+            else
+            {
+                app2->onEncoder(rotation);
+            }
         }
     }
 }

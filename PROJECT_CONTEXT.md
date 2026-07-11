@@ -71,10 +71,11 @@ Rules
 - Apps must render below the status bar (Y >= 18)
 - Use IconManager for visual icons/placeholders instead of text or assets
 - Screen/state transitions should use AnimationManager to avoid blocking delays
+- Follow the redesigned non-blocking NavigationMode flow (Launcher vs. Interactive App Mode)
 
 Current Status
 - Dual displays working
-- Navigation working
+- Navigation working (Redesigned: smooth scrolling, launcher highlights, long-press to exit, click to open)
 - Active display border working
 - WiFiManager exists
 - ThemeManager exists
